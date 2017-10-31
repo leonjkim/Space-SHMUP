@@ -21,37 +21,35 @@ public class Utils : MonoBehaviour
 			return (b0);
 		}
 
-		// else combine them
 		b0.Encapsulate (b1.min);
 		b0.Encapsulate (b1.max);
 		return (b0);
 	}
+		
 
-
-	public static Bounds CombineBoundsOfChildren(GameObject go) 
-	{
+	public static Bounds CombineBoundsOfChildren(GameObject go) {
 		Bounds b = new Bounds (Vector3.zero, Vector3.zero);
-		if (go.renderer != null) {
-			b = BoundsUnion(b, go.renderer.bounds);
+
+		if (go.GetComponent<Renderer>() != null) {
+			b = BoundsUnion (b, go.GetComponent<Renderer>().bounds);
 		}
 
-		if (go.collider != null) {
-			b = BoundsUnion(b, go.collider.bounds);
+		if (go.GetComponent<Collider>() != null) {
+			b = BoundsUnion (b, go.GetComponent<Collider>().bounds);
 		}
 
 		foreach (Transform t in go.transform) {
-				b = BoundsUnion(b, CombineBoundsOfChildren(t.gameObject));
+			b = BoundsUnion (b, CombineBoundsOfChildren (t.gameObject));
 		}
 
 		return (b);
 
+
 	}
+		
 
 
-// PRIVATE VARIABLE
-	static private Bounds _camBounds;
-
-//PROPERTY
+	//PROPERTY
 	static public Bounds camBounds {
 		get {
 			if (_camBounds.size == Vector3.zero) {
@@ -60,6 +58,8 @@ public class Utils : MonoBehaviour
 			return (_camBounds);
 		} // end of get
 	}
+		// PRIVATE VARIABLE
+	static private Bounds _camBounds;
 	
 	//function used by camBound property and also may be called directly
 	
@@ -67,18 +67,19 @@ public class Utils : MonoBehaviour
 		// use the main camera as default if none passed in.
 		if (cam == null)
 			cam = Camera.main;
+	
 			
 		// assuming camera is orthographic and does not have any rotation applied to it	
 		// get top left and bottomRight
 		
 			Vector3 topLeft = new Vector3(0,0,0);
-			Vector3 bottomRight = new Vector3(Screen.width, Screen.height, 0f);
+			Vector3 bottomRight = new Vector3(Screen.width, Screen.height, 0);
 			
 			Vector3 boundTLN = cam.ScreenToWorldPoint(topLeft);
 			Vector3	boundBRF = cam.ScreenToWorldPoint(bottomRight);	
 			
-			boundTLN.z = cam.nearClipPlane;
-			boundBRF.z = cam.farClipPlane;
+			boundTLN.z += cam.nearClipPlane;
+			boundBRF.z += cam.farClipPlane;
 			
 			Vector3 center = (boundTLN + boundBRF) /2f;
 			
@@ -87,9 +88,9 @@ public class Utils : MonoBehaviour
 			_camBounds.Encapsulate(boundBRF);
 	} // end setCameraBounds
 	
-	// checks to see whether the bounds bnd are within the camBounds
-	public static Vector3 ScreenBoundsCheck (Bounds bnd, BoundsTest test = BoundsTest.center) {
-		return (BoundsInBoundsCheck( camBounds, bnd, test));
+
+public static Vector3 ScreenBoundsCheck (Bounds bnd, BoundsTest test = BoundsTest.center) {
+	return (BoundsInBoundsCheck( camBounds, bnd, test));
 	}
 	
 	// Checks to see if bounds lilb are within Bounds bigB
@@ -191,9 +192,29 @@ public class Utils : MonoBehaviour
 		return (Vector3.zero);  // if we get here something went wrong
 	
 	} // end BoundsInBoundsCheck
-	
-	
-	
+	public static GameObject FindTaggedParent( GameObject go){
+		if (go.tag != "Untagged") {
+			return(go);
+		}
+		if (go.transform.parent == null) {
+			return(null);
+		}
+		return (FindTaggedParent (go.transform.parent.gameObject));
+	}
+		
+	public static GameObject FindTaggedParent(Transform t){
+		return(FindTaggedParent (t.gameObject));
+		}
+	static public Material[] GetAllMaterials(GameObject go){
+		List<Material> mats = new List<Material> ();
+		if (go.GetComponent<Renderer>() != null) {
+			mats.Add (go.GetComponent<Renderer>().material);
+		}
+		foreach (Transform t in go.transform) {
+			mats.AddRange (GetAllMaterials (t.gameObject));
+		}
+		return(mats.ToArray ());
+	}
 }// End of Util Class
 
 
